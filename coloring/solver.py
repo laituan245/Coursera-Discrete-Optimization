@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from ortools.linear_solver import pywraplp
 
-def solve_it(input_data, file_location):
+def solve_it(input_data):
     # Modify this code to run your optimization algorithm
 
     # parse the input
@@ -21,10 +21,8 @@ def solve_it(input_data, file_location):
     # Define the MIP solver
     solver = pywraplp.Solver('SolveIntegerProblem',
                               pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-    if 'gc_50_3' in file_location:
-        max_colors = 8
-    else:
-        max_colors = len(node_count)
+    max_colors = 8
+
 
     # Define the binary decision variables
     # x_i_0 indicates whether the node i is colored red or not
@@ -89,6 +87,6 @@ if __name__ == '__main__':
         file_location = sys.argv[1].strip()
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
-        print(solve_it(input_data, file_location))
+        print(solve_it(input_data))
     else:
         print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/gc_4_1)')
