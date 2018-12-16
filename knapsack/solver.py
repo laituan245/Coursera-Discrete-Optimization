@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import namedtuple
-Item = namedtuple("Item", ['index', 'value', 'weight'])
+Item = namedtuple("Item", ['index', 'value', 'weight', 'density'])
 
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
@@ -19,29 +19,44 @@ def solve_it(input_data):
     for i in range(1, item_count+1):
         line = lines[i]
         parts = line.split()
-        items.append(Item(i-1, int(parts[0]), int(parts[1])))
+        items.append(Item(i-1, int(parts[0]), int(parts[1]), float(parts[0])/float(parts[1])))
 
-    # ============== Dynamic Programming Approach ==============
-    dp = [[0 for i in range(capacity+1)] for j in range(len(items) + 1)]
+    if len(items) * capacity <= 100000000:
+        # ============== Dynamic Programming Approach ==============
+        dp = [[0 for i in range(capacity+1)] for j in range(len(items) + 1)]
 
 
-    for i in range(1, len(items) + 1):
-        current_item = items[i-1]
-        for _capacity in range(capacity+1):
-            dp[i][_capacity] = dp[i-1][_capacity]
-            if _capacity >= current_item.weight:
-                dp[i][_capacity] = max(dp[i][_capacity],
-                                       current_item.value + dp[i-1][_capacity-current_item.weight])
-    value = dp[len(items)][capacity]
+        for i in range(1, len(items) + 1):
+            current_item = items[i-1]
+            for _capacity in range(capacity+1):
+                dp[i][_capacity] = dp[i-1][_capacity]
+                if _capacity >= current_item.weight:
+                    dp[i][_capacity] = max(dp[i][_capacity],
+                                           current_item.value + dp[i-1][_capacity-current_item.weight])
+        value = dp[len(items)][capacity]
 
-    taken = [0] * len(items)
-    current_y = capacity
-    for i in range(len(items), 0, -1):
-        if dp[i][current_y] != dp[i-1][current_y]:
-            taken[i-1] = 1
-            current_y = current_y - items[i-1].weight
+        taken = [0] * len(items)
+        current_y = capacity
+        for i in range(len(items), 0, -1):
+            if dp[i][current_y] != dp[i-1][current_y]:
+                taken[i-1] = 1
+                current_y = current_y - items[i-1].weight
 
-    is_optimal = 1
+        is_optimal = 1
+    else:
+        # ============== Greedy Approach ==============
+        items = sorted(items, key=lambda x: x.density, reverse=True)
+        picked_items = []
+        value, weight = 0, 0
+        is_optimal = 0
+        for item in items:
+            if weight + item.weight <= capacity:
+                picked_items.append(item)
+                value += item.value
+                weight += item.weight
+        taken = [0] * len(items)
+        for item in picked_items:
+            taken[item.index] = 1
 
     # prepare the solution in the specified output format
     output_data = str(value) + ' ' + str(is_optimal) + '\n'
