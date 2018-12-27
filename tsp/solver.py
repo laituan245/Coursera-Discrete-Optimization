@@ -31,6 +31,16 @@ def solve_it(input_data):
         parts = line.split()
         points.append(Point(float(parts[0]), float(parts[1])))
 
+    # If the problem size is too large, use trivial solution
+    if len(points) > 1500:
+        solution = range(0, nodeCount)
+        obj = length(points[solution[-1]], points[solution[0]])
+        for index in range(0, nodeCount-1):
+            obj += length(points[solution[index]], points[solution[index+1]])
+        output_data = '%.2f' % obj + ' ' + str(0) + '\n'
+        output_data += ' '.join(map(str, solution))
+        return output_data
+
     # Declare the solver
     routing = pywrapcp.RoutingModel(len(points), 1, 0)
     search_parameters = pywrapcp.RoutingModel.DefaultSearchParameters()
