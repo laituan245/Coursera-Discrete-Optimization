@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from ortools.sat.python import cp_model
 
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
@@ -19,15 +20,31 @@ def solve_it(input_data):
         edges.append((int(parts[0]), int(parts[1])))
 
     # build a trivial solution
-    # every node has its own color
-    solution = range(0, node_count)
+    nb_colors = 1
+    while True:
+        # Create a new model
+        model = cp_model.CpModel()
 
-    # prepare the solution in the specified output format
-    output_data = str(node_count) + ' ' + str(0) + '\n'
-    output_data += ' '.join(map(str, solution))
+        # Creates the variables.
+        colors = []
+        for i in range(node_count):
+            colors.append(model.NewIntVar(0, nb_colors - 1, 'node_{}'.format(i)))
 
-    return output_data
+        # Create the constraints
+        for a, b in edges:
+            model.Add(colors[a] != colors[b])
 
+        # Creates a solver and solves the model.
+        solver = cp_model.CpSolver()
+        status = solver.Solve(model)
+
+        if status == cp_model.FEASIBLE:
+            solution = [solver.Value(color) for color in colors]
+            output_data = str(nb_colors) + ' ' + str(1) + '\n'
+            output_data += ' '.join(map(str, solution))
+            return output_data
+
+        nb_colors += 1
 
 import sys
 
@@ -40,4 +57,3 @@ if __name__ == '__main__':
         print(solve_it(input_data))
     else:
         print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/gc_4_1)')
-
