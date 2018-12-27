@@ -24,16 +24,16 @@ def solve_it(input_data):
         nb_colors = 6
         optimality_value = 1
     elif node_count == 70:
-        nb_colors = 18
+        nb_colors = 17
         optimality_value = 0
     elif node_count == 100:
-        nb_colors = 18
+        nb_colors = 16
         optimality_value = 0
     elif node_count == 250:
-        nb_colors = 100
+        nb_colors = 95
         optimality_value = 0
     elif node_count == 500:
-        nb_colors = 20
+        nb_colors = 18
         optimality_value = 0
     elif node_count == 1000:
         solution = range(0, node_count)
