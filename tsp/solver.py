@@ -32,7 +32,7 @@ def solve_it(input_data):
         points.append(Point(float(parts[0]), float(parts[1])))
 
     # If the problem size is too large, use trivial solution
-    if len(points) > 1500:
+    if len(points) > 10000:
         solution = range(0, nodeCount)
         obj = length(points[solution[-1]], points[solution[0]])
         for index in range(0, nodeCount-1):
@@ -44,6 +44,13 @@ def solve_it(input_data):
     # Declare the solver
     routing = pywrapcp.RoutingModel(len(points), 1, 0)
     search_parameters = pywrapcp.RoutingModel.DefaultSearchParameters()
+
+    # If the problem size is small, use guided local search
+    if len(points) < 5000:
+        search_parameters.local_search_metaheuristic = (
+        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
+        search_parameters.time_limit_ms = 30000
+
     # Create the distance callback.
     dist_callback = create_distance_callback(points)
     routing.SetArcCostEvaluatorOfAllVehicles(dist_callback)
