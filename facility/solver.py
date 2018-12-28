@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import namedtuple
-from gurobipy import *
+from ortools.linear_solver import pywraplp
 import math
 
 Point = namedtuple("Point", ['x', 'y'])
@@ -66,54 +66,48 @@ def solve_it(input_data):
         parts = lines[i].split()
         customers.append(Customer(i-1-facility_count, int(parts[0]), Point(float(parts[1]), float(parts[2]))))
 
-    trivial_solution = _trivial_solution(facilities, customers)
-    if facility_count > 25:
-        return trivial_solution
-
     # Define MILP Model
-    milp_model = Model()
+    solver = pywraplp.Solver('MILP Solver', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    solver.SetTimeLimit(30000)
 
     # Define the decision variables
     is_open_vars = []
     for i in range(facility_count):
-        is_open_vars.append(milp_model.addVar(vtype=GRB.BINARY, name='open_{}'.format(i)))
+        is_open_vars.append(solver.IntVar(0.0, 1.0, 'open_{}'.format(i)))
     is_serve_vars = [[] for i in range(facility_count)]
     for i in range(facility_count):
         for j in range(customer_count):
-            is_serve_vars[i].append(milp_model.addVar(vtype=GRB.BINARY, name='serve_{}_{}'.format(i, j)))
+            is_serve_vars[i].append(solver.IntVar(0.0, 1.0, 'serve_{}_{}'.format(i, j)))
 
     # Define the constraints
     # Constraint 1. Should not exceed capacity of a facility
     for i in range(facility_count):
-        constr_lhs = LinExpr()
+        constraint = solver.Constraint(-solver.infinity(), 0)
         for j in range(customer_count):
-            constr_lhs.add(is_serve_vars[i][j], customers[j].demand)
-        constr_lhs.add(is_open_vars[i], -facilities[i].capacity)
-        milp_model.addConstr(constr_lhs <= 0)
+            constraint.SetCoefficient(is_serve_vars[i][j], customers[j].demand)
+        constraint.SetCoefficient(is_open_vars[i], -facilities[i].capacity)
 
     # Constraint 2. Every customer has to be served by exactly 1 facility
     for j in range(customer_count):
-        constr_lhs = LinExpr()
+        constraint = solver.Constraint(1, 1)
         for i in range(facility_count):
-            constr_lhs.add(is_serve_vars[i][j], 1)
-        milp_model.addConstr(constr_lhs == 1)
+            constraint.SetCoefficient(is_serve_vars[i][j], 1)
 
     # Set up objective
-    objective_expr = LinExpr()
+    objective = solver.Objective()
     for i in range(facility_count):
-        objective_expr.add(is_open_vars[i], facilities[i].setup_cost)
+        objective.SetCoefficient(is_open_vars[i], facilities[i].setup_cost)
     for i in range(facility_count):
         for j in range(customer_count):
-            objective_expr.add(is_serve_vars[i][j], length(facilities[i].location, customers[j].location))
-    milp_model.setObjective(objective_expr, GRB.MINIMIZE)
-    milp_model.params.OutputFlag = 0
-    milp_model.optimize()
+            objective.SetCoefficient(is_serve_vars[i][j], length(facilities[i].location, customers[j].location))
+    objective.SetMinimization()
+    result_status = solver.Solve()
 
-    obj = milp_model.ObjVal
+    obj = solver.Objective().Value()
     solution = []
     for j in range(customer_count):
         for i in range(facility_count):
-            if is_serve_vars[i][j].x == 1:
+            if is_serve_vars[i][j].solution_value() == 1:
                 solution.append(i)
                 break
     # prepare the solution in the specified output format
