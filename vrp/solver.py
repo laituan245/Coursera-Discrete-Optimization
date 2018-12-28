@@ -118,6 +118,34 @@ def solve_it(input_data):
     # Add Capacity constraint
     demand_callback = create_demand_callback(customers)
     add_capacity_constraints(routing, demand_callback, [vehicle_capacity] * vehicle_count)
+    # Setting first solution heuristic (cheapest addition).
+    search_parameters = pywrapcp.RoutingModel.DefaultSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+    # Solve the problem.
+    assignment = routing.SolveWithParameters(search_parameters)
+    if assignment:
+        total_dist = 0.0
+        solution_routes = []
+        for vehicle_id in range(vehicle_count):
+            solution_route = []
+            index = routing.Start(vehicle_id)
+            while not routing.IsEnd(index):
+                node_index = routing.IndexToNode(index)
+                solution_route.append(node_index)
+                next_node_index = routing.IndexToNode(assignment.Value(routing.NextVar(index)))
+                total_dist += length(customers[node_index], customers[next_node_index])
+                index = assignment.Value(routing.NextVar(index))
+
+            node_index = routing.IndexToNode(index)
+            solution_route.append(node_index)
+            solution_routes.append(solution_route[1:-1])
+
+        # prepare the solution in the specified output format
+        outputData = '%.2f' % total_dist + ' ' + str(0) + '\n'
+        for v in range(0, vehicle_count):
+            outputData += str(0) + ' ' + ' '.join([str(customer) for customer in solution_routes[v]]) + ' ' + str(0) + '\n'
+        return outputData
 
 import sys
 
