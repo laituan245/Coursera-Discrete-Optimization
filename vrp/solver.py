@@ -28,6 +28,22 @@ def create_distance_callback(customers):
 
     return distance_callback
 
+def create_demand_callback(customers):
+    # Creates callback to get demands at each location.
+    def demand_callback(from_node, to_node):
+        return customers[from_node].demand
+    return demand_callback
+
+def add_capacity_constraints(routing, demand_callback, vehicle_capacities):
+    # Adds capacity constraint
+    capacity = "Capacity"
+    routing.AddDimensionWithVehicleCapacity(
+        demand_callback,
+        0, # null capacity slack
+        vehicle_capacities,
+        True, # start cumul to zero
+        capacity)
+
 def trivial_solution(customer_count, vehicle_count, vehicle_capacity, customers):
     #the depot is always the first customer in the input
     depot = customers[0]
@@ -98,6 +114,10 @@ def solve_it(input_data):
     # Use Google OR-Tool for CVRP
     routing = pywrapcp.RoutingModel(customer_count, vehicle_count, 0)
     distance_callback = create_distance_callback(customers)
+    routing.SetArcCostEvaluatorOfAllVehicles(distance_callback)
+    # Add Capacity constraint
+    demand_callback = create_demand_callback(customers)
+    add_capacity_constraints(routing, demand_callback, [vehicle_capacity] * vehicle_count)
 
 import sys
 
