@@ -12,6 +12,39 @@ Customer = namedtuple("Customer", ['index', 'demand', 'location'])
 def length(point1, point2):
     return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2)
 
+def _greedy_solution(facilities, customers):
+    facility_count = len(facilities)
+    customer_count = len(customers)
+
+    # Build a greedy solution
+    solution = [-1]*len(customers)
+    used = [0]*len(facilities)
+    capacity_remaining = [f.capacity for f in facilities]
+
+    for customer in customers:
+        facility_index = 0
+        while capacity_remaining[facility_index] < customer.demand:
+            facility_index += 1
+        chosen_facility = facility_index
+        for j in range(facility_index+1, facility_count):
+            if capacity_remaining[j] >= customer.demand and \
+            length(facilities[j].location, customer.location) < length(facilities[chosen_facility].location, customer.location):
+                chosen_facility = j
+        solution[customer.index] = chosen_facility
+        capacity_remaining[chosen_facility] -= customer.demand
+        used[chosen_facility] = 1
+
+    # calculate the cost of the solution
+    obj = sum([f.setup_cost*used[f.index] for f in facilities])
+    for customer in customers:
+        obj += length(customer.location, facilities[solution[customer.index]].location)
+
+    # prepare the solution in the specified output format
+    output_data = '%.2f' % obj + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, solution))
+
+    return output_data
+
 def _trivial_solution(facilities, customers):
     facility_count = len(facilities)
     customer_count = len(customers)
@@ -67,7 +100,7 @@ def solve_it(input_data):
         customers.append(Customer(i-1-facility_count, int(parts[0]), Point(float(parts[1]), float(parts[2]))))
 
     if facility_count > 250:
-        return _trivial_solution(facilities, customers)
+        return _greedy_solution(facilities, customers)
 
     # Define MILP Model
     solver = pywraplp.Solver('MILP Solver', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
