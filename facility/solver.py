@@ -66,9 +66,12 @@ def solve_it(input_data):
         parts = lines[i].split()
         customers.append(Customer(i-1-facility_count, int(parts[0]), Point(float(parts[1]), float(parts[2]))))
 
+    if facility_count > 250:
+        return _trivial_solution(facilities, customers)
+
     # Define MILP Model
     solver = pywraplp.Solver('MILP Solver', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-    solver.SetTimeLimit(30000)
+    solver.SetTimeLimit(100000)
 
     # Define the decision variables
     is_open_vars = []
@@ -102,6 +105,9 @@ def solve_it(input_data):
             objective.SetCoefficient(is_serve_vars[i][j], length(facilities[i].location, customers[j].location))
     objective.SetMinimization()
     result_status = solver.Solve()
+
+    if not (result_status == pywraplp.Solver.OPTIMAL or result_status == pywraplp.Solver.FEASIBLE):
+        return _trivial_solution(facilities, customers)
 
     obj = solver.Objective().Value()
     solution = []
