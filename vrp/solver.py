@@ -3,11 +3,30 @@
 
 import math
 from collections import namedtuple
+from ortools.constraint_solver import pywrapcp
+from ortools.constraint_solver import routing_enums_pb2
 
 Customer = namedtuple("Customer", ['index', 'demand', 'x', 'y'])
 
 def length(customer1, customer2):
     return math.sqrt((customer1.x - customer2.x)**2 + (customer1.y - customer2.y)**2)
+
+def create_distance_callback(customers):
+    # Creates callback to return distance between customers.
+    _distances = {}
+    num_customers = len(customers)
+    for from_node in range(num_customers):
+        _distances[from_node] = {}
+        for to_node in range(num_customers):
+            if from_node == to_node:
+                _distances[from_node][to_node] = 0
+            else:
+                _distances[from_node][to_node] = length(customers[from_node], customers[to_node])
+
+    def distance_callback(from_node, to_node):
+        return _distances[from_node][to_node]
+
+    return distance_callback
 
 def trivial_solution(customer_count, vehicle_count, vehicle_capacity, customers):
     #the depot is always the first customer in the input
@@ -73,7 +92,12 @@ def solve_it(input_data):
         parts = line.split()
         customers.append(Customer(i-1, int(parts[0]), float(parts[1]), float(parts[2])))
 
-    return trivial_solution(customer_count, vehicle_count, vehicle_capacity, customers)
+    # Get the trivial solution
+    trivial_solution_output = trivial_solution(customer_count, vehicle_count, vehicle_capacity, customers)
+
+    # Use Google OR-Tool for CVRP
+    routing = pywrapcp.RoutingModel(customer_count, vehicle_count, 0)
+    distance_callback = create_distance_callback(customers)
 
 import sys
 
