@@ -71,7 +71,7 @@ def solve_it(input_data):
 
     # Define MILP Model
     solver = pywraplp.Solver('MILP Solver', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-    solver.SetTimeLimit(100000)
+    solver.SetTimeLimit(5000000)
 
     # Define the decision variables
     is_open_vars = []
