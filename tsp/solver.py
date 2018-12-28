@@ -49,7 +49,7 @@ def solve_it(input_data):
     if len(points) < 5000:
         search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-        search_parameters.time_limit_ms = 30000
+        search_parameters.time_limit_ms = 300000
 
     # Create the distance callback.
     dist_callback = create_distance_callback(points)
